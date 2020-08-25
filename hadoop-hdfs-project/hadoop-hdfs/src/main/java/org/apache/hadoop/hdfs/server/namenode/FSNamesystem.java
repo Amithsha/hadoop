@@ -6290,7 +6290,7 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
 
   @Override  // NameNodeMXBean
   public String getCompileInfo() {
-    return VersionInfo.getDate() + " by " + VersionInfo.getUser() +
+    return VersionInfo.getDate() + " by Amithsha S"  +
         " from " + VersionInfo.getBranch();
   }
 

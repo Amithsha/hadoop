@@ -172,7 +172,7 @@ public class VersionInfo {
     System.out.println("Hadoop " + getVersion());
     System.out.println("Source code repository " + getUrl() + " -r " +
         getRevision());
-    System.out.println("Compiled by " + getUser() + " on " + getDate());
+    System.out.println("Compiled by " + "AmithshaS" + " on " + getDate());
     System.out.println("Compiled with protoc " + getProtocVersion());
     System.out.println("From source with checksum " + getSrcChecksum());
     System.out.println("This command was run using " + 
