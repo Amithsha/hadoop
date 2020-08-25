@@ -192,6 +192,19 @@ public class Resources {
   public static Resource createResource(int memory) {
     return createResource(memory, (memory > 0) ? 1 : 0);
   }
+  
+  /**
+   * Subtract {@code rhs} from {@code lhs} and reset any negative values to
+   * zero. This call will operate on a copy of {@code lhs}, leaving {@code lhs}
+   * unmodified.
+   *
+   * @param lhs {@link Resource} to subtract from
+   * @param rhs {@link Resource} to subtract
+   * @return the value of lhs after subtraction
+   */
+  public static Resource subtractNonNegative(Resource lhs, Resource rhs) {
+    return subtractFromNonNegative(clone(lhs), rhs);
+  }
 
   public static Resource createResource(int memory, int cores) {
     return Resource.newInstance(memory, cores);

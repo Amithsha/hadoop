@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceAudience.Private;
 import org.apache.hadoop.conf.Configuration;
@@ -50,6 +49,7 @@ import org.apache.hadoop.yarn.util.resource.ResourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 
 @InterfaceAudience.Private
@@ -152,12 +152,25 @@ public class QueueMetrics implements MetricsSource {
     return sb;
   }
 
-  public synchronized
-  static QueueMetrics forQueue(String queueName, Queue parent,
-                               boolean enableUserMetrics,
-			       Configuration conf) {
+  static StringBuilder pSourceName(String partition) {
+    StringBuilder sb = new StringBuilder(P_RECORD_INFO.name());
+    sb.append(",partition").append('=').append(partition);
+    return sb;
+  }
+
+  static StringBuilder qSourceName(String queueName) {
+    StringBuilder sb = new StringBuilder();
+    int i = 0;
+    for (String node : Q_SPLITTER.split(queueName)) {
+      sb.append(",q").append(i++).append('=').append(node);
+    }
+    return sb;
+  }
+
+  public synchronized static QueueMetrics forQueue(String queueName,
+      Queue parent, boolean enableUserMetrics, Configuration conf) {
     return forQueue(DefaultMetricsSystem.instance(), queueName, parent,
-                    enableUserMetrics, conf);
+        enableUserMetrics, conf);
   }
 
   /**
@@ -183,24 +196,20 @@ public class QueueMetrics implements MetricsSource {
     return QUEUE_METRICS;
   }
 
-  public synchronized 
-  static QueueMetrics forQueue(MetricsSystem ms, String queueName,
-                                      Queue parent, boolean enableUserMetrics,
-				      Configuration conf) {
-    QueueMetrics metrics = QUEUE_METRICS.get(queueName);
+  public synchronized static QueueMetrics forQueue(MetricsSystem ms,
+      String queueName, Queue parent, boolean enableUserMetrics,
+      Configuration conf) {
+    QueueMetrics metrics = getQueueMetrics().get(queueName);
     if (metrics == null) {
-      metrics =
-          new QueueMetrics(ms, queueName, parent, enableUserMetrics, conf).
-          tag(QUEUE_INFO, queueName);
-      
+      metrics = new QueueMetrics(ms, queueName, parent, enableUserMetrics, conf)
+          .tag(QUEUE_INFO, queueName);
+
       // Register with the MetricsSystems
       if (ms != null) {
-        metrics = 
-            ms.register(
-                sourceName(queueName).toString(), 
-                "Metrics for queue: " + queueName, metrics);
+        metrics = ms.register(sourceName(queueName).toString(),
+            "Metrics for queue: " + queueName, metrics);
       }
-      QUEUE_METRICS.put(queueName, metrics);
+      getQueueMetrics().put(queueName, metrics);
     }
 
     return metrics;
@@ -212,12 +221,103 @@ public class QueueMetrics implements MetricsSource {
     }
     QueueMetrics metrics = users.get(userName);
     if (metrics == null) {
-      metrics = new QueueMetrics(metricsSystem, queueName, null, false, conf);
+      metrics =
+          new QueueMetrics(metricsSystem, queueName, null, false, conf);
       users.put(userName, metrics);
       metricsSystem.register(
           sourceName(queueName).append(",user=").append(userName).toString(),
           "Metrics for user '"+ userName +"' in queue '"+ queueName +"'",
           metrics.tag(QUEUE_INFO, queueName).tag(USER_INFO, userName));
+    }
+    return metrics;
+  }
+
+  /**
+   * Partition * Queue Metrics
+   *
+   * Computes Metrics at Partition (Node Label) * Queue Level.
+   *
+   * Sample JMX O/P Structure:
+   *
+   * PartitionQueueMetrics (labelX)
+   *  QueueMetrics (A)
+   *    metrics
+   *    QueueMetrics (A1)
+   *      metrics
+   *    QueueMetrics (A2)
+   *      metrics
+   *  QueueMetrics (B)
+   *    metrics
+   *
+   * @param partition
+   * @return QueueMetrics
+   */
+  public synchronized QueueMetrics getPartitionQueueMetrics(String partition) {
+
+    String partitionJMXStr = partition;
+
+    if ((partition == null)
+        || (partition.equals(RMNodeLabelsManager.NO_LABEL))) {
+      partition = DEFAULT_PARTITION;
+      partitionJMXStr = DEFAULT_PARTITION_JMX_STR;
+    }
+
+    String metricName = partition + METRIC_NAME_DELIMITER + this.queueName;
+    QueueMetrics metrics = getQueueMetrics().get(metricName);
+
+    if (metrics == null) {
+      QueueMetrics queueMetrics =
+          new PartitionQueueMetrics(metricsSystem, this.queueName, parentQueue,
+              this.enableUserMetrics, this.conf, partition);
+      metricsSystem.register(
+          pSourceName(partitionJMXStr).append(qSourceName(this.queueName))
+              .toString(),
+          "Metrics for queue: " + this.queueName,
+          queueMetrics.tag(PARTITION_INFO, partitionJMXStr).tag(QUEUE_INFO,
+              this.queueName));
+      getQueueMetrics().put(metricName, queueMetrics);
+      return queueMetrics;
+    } else {
+      return metrics;
+    }
+  }
+
+  /**
+   * Partition Metrics
+   *
+   * Computes Metrics at Partition (Node Label) Level.
+   *
+   * Sample JMX O/P Structure:
+   *
+   * PartitionQueueMetrics (labelX)
+   *  metrics
+   *
+   * @param partition
+   * @return QueueMetrics
+   */
+  private QueueMetrics getPartitionMetrics(String partition) {
+
+    String partitionJMXStr = partition;
+    if ((partition == null)
+        || (partition.equals(RMNodeLabelsManager.NO_LABEL))) {
+      partition = DEFAULT_PARTITION;
+      partitionJMXStr = DEFAULT_PARTITION_JMX_STR;
+    }
+
+    String metricName = partition + METRIC_NAME_DELIMITER;
+    QueueMetrics metrics = getQueueMetrics().get(metricName);
+    if (metrics == null) {
+      metrics = new PartitionQueueMetrics(metricsSystem, this.queueName, null,
+          false, this.conf, partition);
+
+      // Register with the MetricsSystems
+      if (metricsSystem != null) {
+        metricsSystem.register(pSourceName(partitionJMXStr).toString(),
+            "Metrics for partition: " + partitionJMXStr,
+            (PartitionQueueMetrics) metrics.tag(PARTITION_INFO,
+                partitionJMXStr));
+      }
+      getQueueMetrics().put(metricName, metrics);
     }
     return metrics;
   }
@@ -391,7 +491,15 @@ public class QueueMetrics implements MetricsSource {
     if(partition == null || partition.equals(RMNodeLabelsManager.NO_LABEL)) {
       QueueMetrics userMetrics = getUserMetrics(user);
       if (userMetrics != null) {
-        userMetrics.setAvailableResourcesToQueue(partition, limit);
+        userMetrics.setAvailableResources(limit);
+      }
+    }
+    QueueMetrics partitionQueueMetrics = getPartitionQueueMetrics(partition);
+    if (partitionQueueMetrics != null) {
+      QueueMetrics partitionUserMetrics =
+          partitionQueueMetrics.getUserMetrics(user);
+      if (partitionUserMetrics != null) {
+        partitionUserMetrics.setAvailableResources(limit);
       }
     }
   }
@@ -896,5 +1004,13 @@ public class QueueMetrics implements MetricsSource {
         }
       }
     }
+  }
+
+  public void setParent(QueueMetrics parent) {
+    this.parent = parent;
+  }
+
+  public Queue getParentQueue() {
+    return parentQueue;
   }
 }

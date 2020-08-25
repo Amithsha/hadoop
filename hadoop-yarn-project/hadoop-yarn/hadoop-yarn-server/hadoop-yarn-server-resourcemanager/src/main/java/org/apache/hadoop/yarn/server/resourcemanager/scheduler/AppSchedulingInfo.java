@@ -118,6 +118,7 @@ public class AppSchedulingInfo {
     updateContext = new ContainerUpdateContext(this);
     readLock = lock.readLock();
     writeLock = lock.writeLock();
+    this.rmContext = rmContext;
   }
 
   public ApplicationId getApplicationId() {
@@ -709,7 +710,7 @@ public class AppSchedulingInfo {
   }
 
   private void updateMetricsForAllocatedContainer(NodeType type,
-      SchedulerNode node, Container containerAllocated) {
+      SchedulerNode node, RMContainer containerAllocated) {
     QueueMetrics metrics = queue.getMetrics();
     if (pending) {
       // once an allocation is done we assume the application is
@@ -808,5 +809,9 @@ public class AppSchedulingInfo {
     } finally {
       this.readLock.unlock();
     }
+  }
+  
+  public RMContext getRMContext() {
+    return this.rmContext;
   }
 }
