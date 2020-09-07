@@ -552,12 +552,8 @@ public class AppSchedulingInfo {
 
   public ContainerRequest allocate(NodeType type,
       SchedulerNode node, SchedulerRequestKey schedulerKey,
-<<<<<<< ours
-      Container containerAllocated) {
-    writeLock.lock();
-=======
       RMContainer containerAllocated) {
->>>>>>> theirs
+  writeLock.lock();
     try {
       if (null != containerAllocated) {
         updateMetricsForAllocatedContainer(type, node, containerAllocated);
