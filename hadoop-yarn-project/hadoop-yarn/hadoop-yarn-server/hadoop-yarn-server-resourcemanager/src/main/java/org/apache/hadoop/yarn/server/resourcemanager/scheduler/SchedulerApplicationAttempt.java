@@ -214,7 +214,7 @@ public class SchedulerApplicationAttempt implements SchedulableEntity {
     this.rmContext = rmContext;
     this.appSchedulingInfo = new AppSchedulingInfo(applicationAttemptId, user,
         queue, abstractUsersManager, rmContext.getEpoch(), attemptResourceUsage,
-        this.rmContext);
+        applicationSchedulingEnvs, this.rmContext);
     this.queue = queue;
     this.pendingRelease = Collections.newSetFromMap(
         new ConcurrentHashMap<ContainerId, Boolean>());
