@@ -42,7 +42,10 @@ import org.apache.hadoop.yarn.api.records.Container;
 import org.apache.hadoop.yarn.api.records.ExecutionType;
 import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.api.records.ResourceRequest;
+<<<<<<< ours
 import org.apache.hadoop.yarn.api.records.SchedulingRequest;
+=======
+>>>>>>> theirs
 import org.apache.hadoop.yarn.server.resourcemanager.RMContext;
 import org.apache.hadoop.yarn.server.resourcemanager.ResourceManager;
 import org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainer;
@@ -96,6 +99,7 @@ public class AppSchedulingInfo {
   private final ReentrantReadWriteLock.WriteLock writeLock;
 
   public final ContainerUpdateContext updateContext;
+<<<<<<< ours
   private final Map<String, String> applicationSchedulingEnvs = new HashMap<>();
   private final RMContext rmContext;
 
@@ -103,6 +107,14 @@ public class AppSchedulingInfo {
       Queue queue, AbstractUsersManager abstractUsersManager, long epoch,
       ResourceUsage appResourceUsage,
       Map<String, String> applicationSchedulingEnvs, RMContext rmContext) {
+=======
+  
+  private final RMContext rmContext;
+
+  public AppSchedulingInfo(ApplicationAttemptId appAttemptId,
+      String user, Queue queue, AbstractUsersManager abstractUsersManager,
+      long epoch, ResourceUsage appResourceUsage, RMContext rmContext) {
+>>>>>>> theirs
     this.applicationAttemptId = appAttemptId;
     this.applicationId = appAttemptId.getApplicationId();
     this.queue = queue;
@@ -552,8 +564,12 @@ public class AppSchedulingInfo {
 
   public ContainerRequest allocate(NodeType type,
       SchedulerNode node, SchedulerRequestKey schedulerKey,
+<<<<<<< ours
       Container containerAllocated) {
     writeLock.lock();
+=======
+      RMContainer containerAllocated) {
+>>>>>>> theirs
     try {
       if (null != containerAllocated) {
         updateMetricsForAllocatedContainer(type, node, containerAllocated);
@@ -719,6 +735,7 @@ public class AppSchedulingInfo {
       metrics.runAppAttempt(applicationId, user);
     }
 
+<<<<<<< ours
     updateMetrics(applicationId, type, node, containerAllocated, user, queue);
   }
 
@@ -732,6 +749,20 @@ public class AppSchedulingInfo {
     if(node != null) {
       queue.getMetrics().allocateResources(node.getPartition(), user, 1,
           containerAllocated.getResource(), true);
+=======
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("allocate: applicationId=" + applicationId + " container="
+          + containerAllocated.getContainer().getId() + " host="
+          + containerAllocated.getContainer().getNodeId().toString() + " user="
+          + user + " resource="
+          + containerAllocated.getContainer().getResource() + " type=" + type);
+    }
+    if (node != null) {
+      metrics.allocateResources(node.getPartition(), user, 1,
+          containerAllocated.getContainer().getResource(), false);
+      metrics.decrPendingResources(containerAllocated.getNodeLabelExpression(),
+          user, 1, containerAllocated.getContainer().getResource());
+>>>>>>> theirs
     }
     queue.getMetrics().incrNodeTypeAggregations(user, type);
   }

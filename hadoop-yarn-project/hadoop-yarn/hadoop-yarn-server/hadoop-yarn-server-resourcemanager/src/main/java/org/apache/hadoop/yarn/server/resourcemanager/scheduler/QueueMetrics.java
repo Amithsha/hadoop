@@ -110,24 +110,47 @@ public class QueueMetrics implements MetricsSource {
       info("Queue", "Metrics by queue");
   protected static final MetricsInfo USER_INFO =
       info("User", "Metrics by user");
+  protected static final MetricsInfo PARTITION_INFO = 
+      info("Partition", "Metrics by partition");
   static final Splitter Q_SPLITTER =
       Splitter.on('.').omitEmptyStrings().trimResults();
 
   protected final MetricsRegistry registry;
   protected final String queueName;
-  protected final QueueMetrics parent;
+  private QueueMetrics parent;
+  private final Queue parentQueue;
   protected final MetricsSystem metricsSystem;
   protected final Map<String, QueueMetrics> users;
   protected final Configuration conf;
+<<<<<<< ours
   private QueueMetricsForCustomResources queueMetricsForCustomResources;
+=======
+  private final boolean enableUserMetrics;
 
-  protected QueueMetrics(MetricsSystem ms, String queueName, Queue parent, 
-	       boolean enableUserMetrics, Configuration conf) {
+  protected static final MetricsInfo P_RECORD_INFO =
+      info("PartitionQueueMetrics", "Metrics for the resource scheduler");
+
+  // Use "default" to operate NO_LABEL (default) partition internally
+  public static final String DEFAULT_PARTITION = "default";
+
+  // Use "" to register NO_LABEL (default) partition into metrics system
+  public static final String DEFAULT_PARTITION_JMX_STR = "";
+
+  // Metric Name Delimiter
+  public static final String METRIC_NAME_DELIMITER = ".";
+  
+  public QueueMetrics(MetricsSystem ms, String queueName, Queue parent,
+      boolean enableUserMetrics, Configuration conf) {
+>>>>>>> theirs
+
     registry = new MetricsRegistry(RECORD_INFO);
     this.queueName = queueName;
+
     this.parent = parent != null ? parent.getMetrics() : null;
-    this.users = enableUserMetrics ? new HashMap<String, QueueMetrics>()
-                                   : null;
+    this.parentQueue = parent;
+    this.users = enableUserMetrics ? new HashMap<String, QueueMetrics>() : null;
+    this.enableUserMetrics = enableUserMetrics;
+
     metricsSystem = ms;
     this.conf = conf;
     runningTime = buildBuckets(conf);
@@ -462,14 +485,37 @@ public class QueueMetrics implements MetricsSource {
    */
   public void setAvailableResourcesToQueue(String partition, Resource limit) {
     if (partition == null || partition.equals(RMNodeLabelsManager.NO_LABEL)) {
+<<<<<<< ours
       availableMB.set(limit.getMemorySize());
       availableVCores.set(limit.getVirtualCores());
       if (queueMetricsForCustomResources != null) {
         queueMetricsForCustomResources.setAvailable(limit);
+=======
+      setAvailableResources(limit);
+    }
+    QueueMetrics partitionQueueMetrics = getPartitionQueueMetrics(partition);
+    if (partitionQueueMetrics != null) {
+      partitionQueueMetrics.setAvailableResources(limit);
+      if (this.queueName.equals("root")) {
+        QueueMetrics partitionMetrics = getPartitionMetrics(partition);
+        if (partitionMetrics != null) {
+          partitionMetrics.setAvailableResources(limit);
+        }
+>>>>>>> theirs
       }
     }
   }
-
+      
+  /**
+   * Set Available resources with support for resource vectors.
+   *
+   * @param limit
+   */
+  public void setAvailableResources(Resource limit) {
+    availableMB.set(limit.getMemorySize());
+    availableVCores.set(limit.getVirtualCores());
+  }
+      
   /**
    * Set available resources. To be called by scheduler periodically as
    * resources become available.
@@ -515,6 +561,7 @@ public class QueueMetrics implements MetricsSource {
   public void incrPendingResources(String partition, String user,
       int containers, Resource res) {
     if (partition == null || partition.equals(RMNodeLabelsManager.NO_LABEL)) {
+<<<<<<< ours
       _incrPendingResources(containers, res);
       QueueMetrics userMetrics = getUserMetrics(user);
       if (userMetrics != null) {
@@ -522,11 +569,35 @@ public class QueueMetrics implements MetricsSource {
       }
       if (parent != null) {
         parent.incrPendingResources(partition, user, containers, res);
+=======
+      internalIncrPendingResources(partition, user, containers, res);
+    }
+    QueueMetrics partitionQueueMetrics = getPartitionQueueMetrics(partition);
+    if (partitionQueueMetrics != null) {
+      partitionQueueMetrics.internalIncrPendingResources(partition, user,
+          containers, res);
+      QueueMetrics partitionMetrics = getPartitionMetrics(partition);
+      if (partitionMetrics != null) {
+        partitionMetrics.incrementPendingResources(containers, res);
+>>>>>>> theirs
       }
     }
   }
 
-  private void _incrPendingResources(int containers, Resource res) {
+  public void internalIncrPendingResources(String partition, String user,
+      int containers, Resource res) {
+    incrementPendingResources(containers, res);
+    QueueMetrics userMetrics = getUserMetrics(user);
+    if (userMetrics != null) {
+      userMetrics.internalIncrPendingResources(partition, user, containers,
+          res);
+    }
+    if (parent != null) {
+      parent.internalIncrPendingResources(partition, user, containers, res);
+    }
+  }
+    
+  private void incrementPendingResources(int containers, Resource res) {
     pendingContainers.incr(containers);
     pendingMB.incr(res.getMemorySize() * containers);
     pendingVCores.incr(res.getVirtualCores() * containers);
@@ -539,6 +610,7 @@ public class QueueMetrics implements MetricsSource {
   public void decrPendingResources(String partition, String user,
       int containers, Resource res) {
     if (partition == null || partition.equals(RMNodeLabelsManager.NO_LABEL)) {
+<<<<<<< ours
       _decrPendingResources(containers, res);
       QueueMetrics userMetrics = getUserMetrics(user);
       if (userMetrics != null) {
@@ -546,11 +618,35 @@ public class QueueMetrics implements MetricsSource {
       }
       if (parent != null) {
         parent.decrPendingResources(partition, user, containers, res);
+=======
+      internalDecrPendingResources(partition, user, containers, res);
+    }
+    QueueMetrics partitionQueueMetrics = getPartitionQueueMetrics(partition);
+    if (partitionQueueMetrics != null) {
+      partitionQueueMetrics.internalDecrPendingResources(partition, user,
+          containers, res);
+      QueueMetrics partitionMetrics = getPartitionMetrics(partition);
+      if (partitionMetrics != null) {
+        partitionMetrics.decrementPendingResources(containers, res);
+>>>>>>> theirs
       }
     }
   }
+  
+  public void internalDecrPendingResources(String partition, String user,
+      int containers, Resource res) {
+    decrementPendingResources(containers, res);
+    QueueMetrics userMetrics = getUserMetrics(user);
+    if (userMetrics != null) {
+      userMetrics.internalDecrPendingResources(partition, user, containers,
+          res);
+    }
+    if (parent != null) {
+      parent.internalDecrPendingResources(partition, user, containers, res);
+    }
+  }
 
-  private void _decrPendingResources(int containers, Resource res) {
+  private void decrementPendingResources(int containers, Resource res) {
     pendingContainers.decr(containers);
     pendingMB.decr(res.getMemorySize() * containers);
     pendingVCores.decr(res.getVirtualCores() * containers);
@@ -578,6 +674,7 @@ public class QueueMetrics implements MetricsSource {
     }
   }
 
+<<<<<<< ours
   public void allocateResources(String partition, String user,
       int containers, Resource res, boolean decrPending) {
     if (partition == null || partition.equals(RMNodeLabelsManager.NO_LABEL)) {
@@ -600,10 +697,47 @@ public class QueueMetrics implements MetricsSource {
       }
       if (parent != null) {
         parent.allocateResources(partition, user, containers, res, decrPending);
+=======
+  public void allocateResources(String partition, String user, int containers,
+      Resource res, boolean decrPending) {
+    if (partition == null || partition.equals(RMNodeLabelsManager.NO_LABEL)) {
+      internalAllocateResources(partition, user, containers, res, decrPending);
+    }
+    QueueMetrics partitionQueueMetrics = getPartitionQueueMetrics(partition);
+    if (partitionQueueMetrics != null) {
+      partitionQueueMetrics.internalAllocateResources(partition, user,
+          containers, res, decrPending);
+      QueueMetrics partitionMetrics = getPartitionMetrics(partition);
+      if (partitionMetrics != null) {
+        partitionMetrics.computeAllocateResources(containers, res, decrPending);
+>>>>>>> theirs
       }
     }
   }
 
+  public void internalAllocateResources(String partition, String user,
+      int containers, Resource res, boolean decrPending) {
+    computeAllocateResources(containers, res, decrPending);
+    QueueMetrics userMetrics = getUserMetrics(user);
+    if (userMetrics != null) {
+      userMetrics.internalAllocateResources(partition, user, containers, res,
+          decrPending);
+    }
+    if (parent != null) {
+      parent.internalAllocateResources(partition, user, containers, res, decrPending);
+    }
+  }
+
+  private void computeAllocateResources(int containers, Resource res,
+      boolean decrPending) {
+    allocatedContainers.incr(containers);
+    aggregateContainersAllocated.incr(containers);
+    allocatedMB.incr(res.getMemorySize() * containers);
+    allocatedVCores.incr(res.getVirtualCores() * containers);
+    if (decrPending) {
+      decrementPendingResources(containers, res);
+    }
+  }
   /**
    * Allocate Resource for container size change.
    * @param partition Node Partition
@@ -634,6 +768,7 @@ public class QueueMetrics implements MetricsSource {
     }
   }
 
+<<<<<<< ours
   public void releaseResources(String partition,
       String user, int containers, Resource res) {
     if (partition == null || partition.equals(RMNodeLabelsManager.NO_LABEL)) {
@@ -651,9 +786,43 @@ public class QueueMetrics implements MetricsSource {
       }
       if (parent != null) {
         parent.releaseResources(partition, user, containers, res);
+=======
+  public void releaseResources(String partition, String user, int containers,
+      Resource res) {
+    if (partition == null || partition.equals(RMNodeLabelsManager.NO_LABEL)) {
+      internalReleaseResources(partition, user, containers, res);
+    }
+    QueueMetrics partitionQueueMetrics = getPartitionQueueMetrics(partition);
+    if (partitionQueueMetrics != null) {
+      partitionQueueMetrics.internalReleaseResources(partition, user,
+          containers, res);
+      QueueMetrics partitionMetrics = getPartitionMetrics(partition);
+      if (partitionMetrics != null) {
+        partitionMetrics.computeReleaseResources(containers, res);
+>>>>>>> theirs
       }
     }
   }
+
+  public void internalReleaseResources(String partition, String user,
+      int containers, Resource res) {
+    computeReleaseResources(containers, res);
+    QueueMetrics userMetrics = getUserMetrics(user);
+    if (userMetrics != null) {
+      userMetrics.internalReleaseResources(partition, user, containers, res);
+    }
+    if (parent != null) {
+      parent.internalReleaseResources(partition, user, containers, res);
+    }
+  }
+
+  private void computeReleaseResources(int containers, Resource res) {
+    allocatedContainers.decr(containers);
+    aggregateContainersReleased.incr(containers);
+    allocatedMB.decr(res.getMemorySize() * containers);
+    allocatedVCores.decr(res.getVirtualCores() * containers);
+  }
+
 
   /**
    * Release Resource for container size change.
@@ -728,6 +897,7 @@ public class QueueMetrics implements MetricsSource {
 
   public void reserveResource(String partition, String user, Resource res) {
     if (partition == null || partition.equals(RMNodeLabelsManager.NO_LABEL)) {
+<<<<<<< ours
       reserveResource(user, res);
     }
   }
@@ -739,15 +909,33 @@ public class QueueMetrics implements MetricsSource {
     if (queueMetricsForCustomResources != null) {
       queueMetricsForCustomResources.increaseReserved(res);
     }
-    QueueMetrics userMetrics = getUserMetrics(user);
-    if (userMetrics != null) {
-      userMetrics.reserveResource(user, res);
+=======
+      internalReserveResources(partition, user, res);
     }
-    if (parent != null) {
-      parent.reserveResource(user, res);
+    QueueMetrics partitionQueueMetrics = getPartitionQueueMetrics(partition);
+    if (partitionQueueMetrics != null) {
+      partitionQueueMetrics.internalReserveResources(partition, user, res);
+      QueueMetrics partitionMetrics = getPartitionMetrics(partition);
+      if (partitionMetrics != null) {
+        partitionMetrics.incrReserveResources(res);
+      }
     }
   }
 
+  public void internalReserveResources(String partition, String user,
+      Resource res) {
+    incrReserveResources(res);
+>>>>>>> theirs
+    QueueMetrics userMetrics = getUserMetrics(user);
+    if (userMetrics != null) {
+      userMetrics.internalReserveResources(partition, user, res);
+    }
+    if (parent != null) {
+      parent.internalReserveResources(partition, user, res);
+    }
+  }
+
+<<<<<<< ours
   private void unreserveResource(String user, Resource res) {
     reservedContainers.decr();
     reservedMB.decr(res.getMemorySize());
@@ -755,19 +943,49 @@ public class QueueMetrics implements MetricsSource {
     if (queueMetricsForCustomResources != null) {
       queueMetricsForCustomResources.decreaseReserved(res);
     }
-    QueueMetrics userMetrics = getUserMetrics(user);
-    if (userMetrics != null) {
-      userMetrics.unreserveResource(user, res);
-    }
-    if (parent != null) {
-      parent.unreserveResource(user, res);
-    }
+=======
+  public void incrReserveResources(Resource res) {
+    reservedContainers.incr();
+    reservedMB.incr(res.getMemorySize());
+    reservedVCores.incr(res.getVirtualCores());
   }
 
+  public void internalUnReserveResources(String partition, String user,
+      Resource res) {
+    decrReserveResource(user, res);
+>>>>>>> theirs
+    QueueMetrics userMetrics = getUserMetrics(user);
+    if (userMetrics != null) {
+      userMetrics.internalUnReserveResources(partition, user, res);
+    }
+    if (parent != null) {
+      parent.internalUnReserveResources(partition, user, res);
+    }
+  }
+  
   public void unreserveResource(String partition, String user, Resource res) {
+<<<<<<< ours
     if (partition == null || partition.equals(RMNodeLabelsManager.NO_LABEL)) {
       unreserveResource(user, res);
+=======
+    if(partition == null || partition.equals(RMNodeLabelsManager.NO_LABEL)) {
+      internalUnReserveResources(partition, user, res);
     }
+    QueueMetrics partitionQueueMetrics = getPartitionQueueMetrics(partition);
+    if (partitionQueueMetrics != null) {
+      partitionQueueMetrics.internalUnReserveResources(partition, user, res);
+      QueueMetrics partitionMetrics = getPartitionMetrics(partition);
+      if (partitionMetrics != null) {
+        partitionMetrics.decrReserveResource(user, res);
+      }
+>>>>>>> theirs
+    }
+  }
+  
+  public void decrReserveResource(String user, Resource res) {
+    reservedContainers.decr();
+    reservedMB.decr(res.getMemorySize());
+    reservedVCores.decr(res.getVirtualCores());
   }
 
   public void incrActiveUsers() {
@@ -1013,4 +1231,15 @@ public class QueueMetrics implements MetricsSource {
   public Queue getParentQueue() {
     return parentQueue;
   }
+<<<<<<< ours
+=======
+
+  public void setParent(QueueMetrics parent) {
+    this.parent = parent;
+  }
+
+  public Queue getParentQueue() {
+    return parentQueue;
+  }
+>>>>>>> theirs
 }

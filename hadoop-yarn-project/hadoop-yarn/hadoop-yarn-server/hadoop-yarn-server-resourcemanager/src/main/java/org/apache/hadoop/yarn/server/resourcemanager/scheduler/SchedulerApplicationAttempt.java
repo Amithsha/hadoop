@@ -212,6 +212,12 @@ public class SchedulerApplicationAttempt implements SchedulableEntity {
       RMContext rmContext) {
     Preconditions.checkNotNull(rmContext, "RMContext should not be null");
     this.rmContext = rmContext;
+<<<<<<< ours
+=======
+    this.appSchedulingInfo = new AppSchedulingInfo(applicationAttemptId, user,
+        queue, abstractUsersManager, rmContext.getEpoch(), attemptResourceUsage,
+        this.rmContext);
+>>>>>>> theirs
     this.queue = queue;
     this.pendingRelease = Collections.newSetFromMap(
         new ConcurrentHashMap<ContainerId, Boolean>());

@@ -455,8 +455,13 @@ public class FSAppAttempt extends SchedulerApplicationAttempt
       addToNewlyAllocatedContainers(node, rmContainer);
       liveContainers.put(container.getId(), rmContainer);
       // Update consumption and track allocations
+<<<<<<< ours
       ContainerRequest containerRequest = appSchedulingInfo.allocate(
           type, node, schedulerKey, container);
+=======
+      List<ResourceRequest> resourceRequestList = appSchedulingInfo.allocate(
+          type, node, schedulerKey, rmContainer);
+>>>>>>> theirs
       this.attemptResourceUsage.incUsed(container.getResource());
       getQueue().incUsedResource(container.getResource());
 
