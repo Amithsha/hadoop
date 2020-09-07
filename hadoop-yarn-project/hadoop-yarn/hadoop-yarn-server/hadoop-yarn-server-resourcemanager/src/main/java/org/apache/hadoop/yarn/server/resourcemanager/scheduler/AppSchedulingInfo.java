@@ -42,10 +42,7 @@ import org.apache.hadoop.yarn.api.records.Container;
 import org.apache.hadoop.yarn.api.records.ExecutionType;
 import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.api.records.ResourceRequest;
-<<<<<<< ours
 import org.apache.hadoop.yarn.api.records.SchedulingRequest;
-=======
->>>>>>> theirs
 import org.apache.hadoop.yarn.server.resourcemanager.RMContext;
 import org.apache.hadoop.yarn.server.resourcemanager.ResourceManager;
 import org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainer;
@@ -99,7 +96,6 @@ public class AppSchedulingInfo {
   private final ReentrantReadWriteLock.WriteLock writeLock;
 
   public final ContainerUpdateContext updateContext;
-<<<<<<< ours
   private final Map<String, String> applicationSchedulingEnvs = new HashMap<>();
   private final RMContext rmContext;
 
@@ -107,14 +103,6 @@ public class AppSchedulingInfo {
       Queue queue, AbstractUsersManager abstractUsersManager, long epoch,
       ResourceUsage appResourceUsage,
       Map<String, String> applicationSchedulingEnvs, RMContext rmContext) {
-=======
-  
-  private final RMContext rmContext;
-
-  public AppSchedulingInfo(ApplicationAttemptId appAttemptId,
-      String user, Queue queue, AbstractUsersManager abstractUsersManager,
-      long epoch, ResourceUsage appResourceUsage, RMContext rmContext) {
->>>>>>> theirs
     this.applicationAttemptId = appAttemptId;
     this.applicationId = appAttemptId.getApplicationId();
     this.queue = queue;
