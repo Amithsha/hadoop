@@ -719,34 +719,22 @@ public class AppSchedulingInfo {
       metrics.runAppAttempt(applicationId, user);
     }
 
-<<<<<<< ours
     updateMetrics(applicationId, type, node, containerAllocated, user, queue);
   }
 
   public static void updateMetrics(ApplicationId applicationId, NodeType type,
       SchedulerNode node, Container containerAllocated, String user,
       Queue queue) {
+    if (LOG.isDebugEnabled()) {
     LOG.debug("allocate: applicationId={} container={} host={} user={}"
         + " resource={} type={}", applicationId, containerAllocated.getId(),
         containerAllocated.getNodeId(), user, containerAllocated.getResource(),
-        type);
-    if(node != null) {
-      queue.getMetrics().allocateResources(node.getPartition(), user, 1,
-          containerAllocated.getResource(), true);
-=======
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("allocate: applicationId=" + applicationId + " container="
-          + containerAllocated.getContainer().getId() + " host="
-          + containerAllocated.getContainer().getNodeId().toString() + " user="
-          + user + " resource="
-          + containerAllocated.getContainer().getResource() + " type=" + type);
-    }
+        type);}
     if (node != null) {
       metrics.allocateResources(node.getPartition(), user, 1,
-          containerAllocated.getContainer().getResource(), false);
+          containerAllocated.getResource(), false);
       metrics.decrPendingResources(containerAllocated.getNodeLabelExpression(),
-          user, 1, containerAllocated.getContainer().getResource());
->>>>>>> theirs
+          user, 1, containerAllocated.getResource());
     }
     queue.getMetrics().incrNodeTypeAggregations(user, type);
   }
