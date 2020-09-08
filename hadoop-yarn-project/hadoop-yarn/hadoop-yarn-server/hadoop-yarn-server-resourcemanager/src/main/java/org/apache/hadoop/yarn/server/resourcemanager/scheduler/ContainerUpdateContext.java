@@ -160,17 +160,10 @@ public class ContainerUpdateContext {
           ResourceRequest.ANY);
       // Decrement the pending using a dummy RR with
       // resource = prev update req capability
-<<<<<<< ours
       if (pendingAsk != null && pendingAsk.getCount() > 0) {
-        appSchedulingInfo.allocate(NodeType.OFF_SWITCH, schedulerNode,
-            schedulerKey, Container.newInstance(UNDEFINED,
-                schedulerNode.getNodeID(), "host:port",
-                pendingAsk.getPerAllocationResource(),
-                schedulerKey.getPriority(), null));
-=======
-      if (prevReq != null) {
-        Container container = Container.newInstance(UNDEFINED,
-            schedulerNode.getNodeID(), "host:port", prevReq.getCapability(),
+          Container container = Container.newInstance(UNDEFINED,
+            schedulerNode.getNodeID(), "host:port",
+            pendingAsk.getPerAllocationResource(),
             schedulerKey.getPriority(), null);
         appSchedulingInfo.allocate(NodeType.OFF_SWITCH, schedulerNode,
             schedulerKey,
@@ -179,7 +172,6 @@ public class ContainerUpdateContext {
                 schedulerNode.getNodeID(), appSchedulingInfo.getUser(),
                 appSchedulingInfo.getRMContext(),
                 schedulingPlacementSet.getPrimaryRequestedNodePartition()));
->>>>>>> theirs
       }
     }
   }
