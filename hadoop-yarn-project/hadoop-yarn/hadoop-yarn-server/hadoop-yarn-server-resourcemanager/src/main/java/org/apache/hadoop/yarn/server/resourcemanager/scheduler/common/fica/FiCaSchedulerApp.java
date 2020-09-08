@@ -599,13 +599,13 @@ public class FiCaSchedulerApp extends SchedulerApplicationAttempt {
           liveContainers.put(containerId, rmContainer);
 
           // Deduct pending resource requests
-<<<<<<< ours
+
           if (updatePending) {
             ContainerRequest containerRequest = appSchedulingInfo.allocate(
                 allocation.getAllocationLocalityType(),
                 schedulerContainer.getSchedulerNode(),
                 schedulerContainer.getSchedulerRequestKey(),
-                schedulerContainer.getRmContainer().getContainer());
+                schedulerContainer.getRmContainer());
             ((RMContainerImpl) rmContainer).setContainerRequest(
                 containerRequest);
 
@@ -619,16 +619,9 @@ public class FiCaSchedulerApp extends SchedulerApplicationAttempt {
             AppSchedulingInfo.updateMetrics(getApplicationId(),
                 allocation.getAllocationLocalityType(),
                 schedulerContainer.getSchedulerNode(),
-                schedulerContainer.getRmContainer().getContainer(), getUser(),
+                schedulerContainer.getRmContainer(), getUser(),
                 getQueue());
           }
-=======
-          List<ResourceRequest> requests = appSchedulingInfo.allocate(
-              allocation.getAllocationLocalityType(),
-              schedulerContainer.getSchedulerNode(),
-              schedulerContainer.getSchedulerRequestKey(), rmContainer);
-          ((RMContainerImpl) rmContainer).setResourceRequests(requests);
->>>>>>> theirs
 
           attemptResourceUsage.incUsed(schedulerContainer.getNodePartition(),
               allocation.getAllocatedOrReservedResource());
