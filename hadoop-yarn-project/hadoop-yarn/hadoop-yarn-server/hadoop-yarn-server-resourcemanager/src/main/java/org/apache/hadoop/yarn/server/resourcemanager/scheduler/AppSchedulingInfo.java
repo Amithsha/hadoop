@@ -723,17 +723,18 @@ public class AppSchedulingInfo {
   }
 
   public static void updateMetrics(ApplicationId applicationId, NodeType type,
-      SchedulerNode node, Container containerAllocated, String user,
+      SchedulerNode node, RMContainer containerAllocated, String user,
       Queue queue) {
-    if (LOG.isDebugEnabled()) {
     LOG.debug("allocate: applicationId={} container={} host={} user={}"
-        + " resource={} type={}", applicationId, containerAllocated.getId(),
-        containerAllocated.getNodeId(), user, containerAllocated.getResource(),
-        type);}
+        + " resource={} type={}",applicationId,
+        containerAllocated.getContainer().getId(),
+        containerAllocated.getNodeId(), user,
+        containerAllocated.getContainer().getResource(),
+        type);
     if (node != null) {
-      metrics.allocateResources(node.getPartition(), user, 1,
-          containerAllocated.getResource(), false);
-      metrics.decrPendingResources(containerAllocated.getNodeLabelExpression(),
+      queue.getMetrics().allocateResources(node.getPartition(), user, 1,
+           containerAllocated.getContainer().getResource(), false);
+      queue.getMetrics().decrPendingResources(containerAllocated.getNodeLabelExpression(),
           user, 1, containerAllocated.getResource());
     }
     queue.getMetrics().incrNodeTypeAggregations(user, type);
