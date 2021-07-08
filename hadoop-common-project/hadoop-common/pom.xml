@@ -329,6 +329,11 @@
       <artifactId>dnsjava</artifactId>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>com.flipkart.kloud.config</groupId>
+      <artifactId>client-java</artifactId>
+      <version>1.0.8</version>
+    </dependency>
   </dependencies>
 
   <build>
